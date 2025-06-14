@@ -1,0 +1,19 @@
+{
+  "name": "nobilist-rank-check-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/web-api": "^7.9.2",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^16.5.0",
+    "googleapis": "^150.0.1",
+    "playwright": "^1.53.0"
+  }
+}

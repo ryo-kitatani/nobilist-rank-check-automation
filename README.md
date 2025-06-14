@@ -1,1 +1,0 @@
-# nobilist-rank-check-automation
