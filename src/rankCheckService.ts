@@ -28,8 +28,14 @@ export default class RankCheckService {
       
       if (csvPath) {
         const rankData = await this.parseLocalData(csvPath);
-        await this.syncToGoogleSheets(rankData);
-        await this.sendSlackNotification(rankData);
+        const today = new Date().toISOString().split('T')[0];
+        
+        // 今日の日付のデータのみをフィルタリング
+        const todayData = rankData.filter(item => item.date === today);
+        console.log(`📊 処理対象: ${today}のデータ ${todayData.length}件 / 全データ ${rankData.length}件`);
+        
+        await this.syncToGoogleSheets(todayData);
+        await this.sendSlackNotification(todayData);
       }
     } catch (error) {
       console.error('❌ エラー発生:', (error as Error).message);
@@ -108,6 +114,7 @@ export default class RankCheckService {
     try {
       console.log('\n📍 Slack通知を送信中...');
       const today = new Date().toISOString().split('T')[0];
+      // 既にフィルタリング済みのデータを渡す
       await this.slackNotifier.notifyRankingResults(rankData, today);
     } catch (error) {
       console.log('⚠️  Slack通知エラー:', (error as Error).message);

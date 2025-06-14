@@ -76,6 +76,7 @@ export default class SlackNotifier {
       } else if (item.rank >= 11 && item.rank <= 50) {
         rankCounts['11-50']++;
       } else {
+        // 0以下、51以上、NaNなど全て「それ以下」に分類
         rankCounts.others++;
       }
 
@@ -130,14 +131,14 @@ export default class SlackNotifier {
 
     let message = "";
     message += `Nobilist順位チェッカー順位計測結果（${date})\n\n`;
-    
-    message += `■ 順位分布 [確認]\n`;
+
+    message += `■ 順位分布 [<https://docs.google.com/spreadsheets/d/1suoQqpEBwvVYYVTM5LKjAUP6m0XQE0iO22Apnd7Mu4s/edit?gid=1149902036#gid=1149902036|確認>]\n`;
     message += `1~3位  ：${rankPercent['1-3'].toFixed(2)}% (${rankCounts['1-3']}件)\n`;
     message += `4~10位 ：${rankPercent['4-10'].toFixed(2)}% (${rankCounts['4-10']}件)\n`;
     message += `11~50位：${rankPercent['11-50'].toFixed(2)}% (${rankCounts['11-50']}件)\n`;
     message += `それ以下：${rankPercent.others.toFixed(2)}%(${rankCounts.others}件)\n\n`;
 
-    message += `■ 順位変化 [確認]\n`;
+    message += `■ 順位変化 [<https://docs.google.com/spreadsheets/d/1suoQqpEBwvVYYVTM5LKjAUP6m0XQE0iO22Apnd7Mu4s/edit?gid=875126846#gid=875126846|確認]>\n`;
     message += `上昇：${changeStats.improved}件 (${((changeStats.improved / total) * 100).toFixed(2)}%)\n`;
     message += `下降：${changeStats.worsened}件 (${((changeStats.worsened / total) * 100).toFixed(2)}%)\n`;
     message += `変化なし：${changeStats.unchanged}件 (${((changeStats.unchanged / total) * 100).toFixed(2)}%)\n\n`;
@@ -168,6 +169,7 @@ export default class SlackNotifier {
 
   async notifyRankingResults(data: RankData[], date: string): Promise<void> {
     try {
+      // rankCheckServiceで既にフィルタリング済みのデータを使用
       const analysis = this.analyzeRankData(data);
       const message = this.createAnalysisMessage(analysis, date);
       await this.sendToSlack({ message });
