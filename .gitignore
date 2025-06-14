@@ -3,3 +3,5 @@ node_modules/
 .env
 downloads/*.csv
 *.log
+dist/
+google_credentials_for_app.json

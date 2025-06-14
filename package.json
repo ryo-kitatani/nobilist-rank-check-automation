@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "npm run build && node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,9 +14,18 @@
   "license": "ISC",
   "dependencies": {
     "@slack/web-api": "^7.9.2",
+    "axios": "^1.9.0",
+    "csv-parse": "^5.6.0",
     "csv-parser": "^3.2.0",
     "dotenv": "^16.5.0",
+    "google-auth-library": "^10.1.0",
     "googleapis": "^150.0.1",
     "playwright": "^1.53.0"
+  },
+  "devDependencies": {
+    "@types/csv-parse": "^1.2.5",
+    "@types/node": "^24.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }
