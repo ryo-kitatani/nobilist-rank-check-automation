@@ -4,26 +4,26 @@
 ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 
-TypeScript-based automation tool for automatically downloading ranking reports from **Nobilist** (Japanese SEO ranking tool), processing CSV data, and syncing to Google Sheets in matrix format with Slack notifications.
+A comprehensive TypeScript automation tool for **Nobilist** (Japanese SEO ranking tool) that downloads ranking reports, processes CSV data, syncs to Google Sheets in matrix format, and sends intelligent Slack notifications with ranking analysis.
 
 ## 🚀 Features
 
 - **🔐 Automated Login**: Uses Playwright to automatically log into Nobilist platform with stored credentials
-- **📊 CSV Report Download**: Automatically navigates to specific website reports and downloads ranking data as CSV files
-- **📈 Matrix Format Google Sheets**: Updates Google Sheets in matrix format (keywords × dates) with automatic keyword row creation
-- **🔗 URL Tracking**: Automatically tracks ranking URLs in spreadsheet with multi-URL support
-- **📱 Slack Notifications**: Sends detailed ranking analysis to Slack with statistics and insights
-- **📁 File Management**: Saves downloaded files with date-stamped filenames in a dedicated downloads folder
-- **🔄 Automated Process**: Complete end-to-end automation from login to Slack notification
+- **📊 Intelligent CSV Processing**: Downloads and parses ranking reports with comprehensive data validation
+- **📈 Matrix Format Sync**: Updates Google Sheets in matrix format (keywords × dates) with automatic row/column management
+- **🔗 Multi-URL Tracking**: Tracks ranking URLs in spreadsheet with line-break separation for multiple URLs
+- **📱 Smart Notifications**: Sends detailed Slack reports with ranking distribution, trend analysis, and performance insights
+- **📁 Organized File Management**: Structured project with src/ directory and automated file handling
+- **🔄 End-to-End Automation**: Complete workflow from browser automation to data analysis and notifications
 
 ## 🛠️ Technology Stack
 
 - **TypeScript/Node.js** - Core runtime and language
 - **Playwright** - Browser automation for web scraping
-- **Google Sheets API** - For spreadsheet data synchronization
-- **Slack Web API** - For automated notifications
-- **dotenv** - Environment variable management
-- **csv-parser** - CSV file processing
+- **Google Sheets API v4** - Matrix-format spreadsheet synchronization with service account authentication
+- **Slack Webhook API** - Rich notification system with threading and analysis
+- **CSV-Parse** - Robust CSV data processing and validation
+- **Axios** - HTTP client for API communications
 
 ## 📁 Project Structure
 
@@ -72,19 +72,25 @@ nobilist-rank-check-automation/
    NOBILIST_EMAIL=your-email@example.com
    NOBILIST_PASSWORD=your-password
    GOOGLE_SPREADSHEET_ID=your-google-spreadsheet-id
-   SLACK_WEBHOOK_URL=your-slack-webhook-url
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
    NODE_ENV=development
    ```
 
 5. **Set up Google Sheets API**
-   - Create a Google Cloud project and enable the Google Sheets API
-   - Create a service account and download the credentials JSON file
-   - Rename the file to `google_credentials_for_app.json` and place it in the root directory
-   - Share your Google Spreadsheet with the service account email
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing one
+   - Enable the **Google Sheets API**
+   - Create a **Service Account** and generate a JSON key
+   - Download and rename the key file to `google_credentials_for_app.json`
+   - Place the file in the project root directory
+   - Create a Google Spreadsheet and share it with the service account email (found in the JSON file)
+   - Copy the spreadsheet ID from the URL and add it to your `.env` file
 
 6. **Set up Slack Integration (Optional)**
-   - Create a Slack webhook URL in your workspace
-   - Add the webhook URL to your `.env` file
+   - Go to your Slack workspace settings
+   - Create an **Incoming Webhook** integration
+   - Copy the webhook URL to your `.env` file
+   - The tool will send rich ranking reports with statistics and insights
 
 ## 🚀 Usage
 
@@ -113,12 +119,18 @@ npm run dev
 ### Expected Output:
 
 ```
-📍 ブラウザ初期化中...
-📍 ログイン中...
-✅ ログイン成功！
-📍 CSVダウンロード開始...
-✅ CSVダウンロード成功: ./downloads/nobilist_ranks_2025-06-14.csv
+📍 初期化中...
+Nobilistにログイン中...♻️
+ログイン成功
+📍 データ解析中...
+✅ 273件のデータを読み込みました
+
+📍 Google Spreadsheetへの転記を試みています...
+✅ Google Sheets APIを初期化しました
 ✅ 273件のデータをマトリックス形式で更新しました
+✅ Google Spreadsheetへの転記完了！
+
+📍 Slack通知を送信中...
 ✅ Slack通知を送信しました
 📍 ブラウザ終了
 ```
@@ -148,15 +160,23 @@ npm run build
 | `SLACK_WEBHOOK_URL` | Slack webhook URL for notifications | Optional |
 | `NODE_ENV` | Environment (development/production) | No |
 
-## 🔮 Future Enhancements
+## 📊 Slack Notification Features
 
-The following features are planned for future development:
+The tool sends comprehensive ranking reports to Slack including:
+
+- **📈 Ranking Distribution**: Percentage breakdown of rankings (1-3位, 4-10位, 11-50位, etc.)
+- **📊 Trend Analysis**: Daily ranking changes with improvement/decline statistics
+- **🏆 Top Performers**: Keywords with significant ranking improvements (3+ positions)
+- **⚠️ Alert Keywords**: Keywords with significant ranking drops (3+ positions)
+- **📋 Summary Stats**: Total keywords tracked, change percentages, and date tracking
+
+## 🔮 Future Enhancements
 
 - **⏰ Scheduled Runs**: Set up cron jobs for automated daily/weekly runs
 - **🔧 Multiple Sites**: Support for multiple website reports
-- **📈 Advanced Analytics**: More detailed data analysis and trend reporting
-- **🚨 Alert System**: Automated alerts for significant ranking changes
-- **📊 Dashboard**: Web-based dashboard for monitoring rankings
+- **📈 Historical Trends**: Long-term ranking trend analysis and visualization
+- **🚨 Smart Alerts**: Customizable alerts for ranking threshold changes
+- **📊 Web Dashboard**: Real-time ranking monitoring interface
 
 ## 🤝 Contributing
 
@@ -172,14 +192,15 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 
 ## ⚠️ Important Notes
 
-- This tool is specifically designed for Nobilist platform
-- Currently configured for "coeteco.jp" reports
-- Requires valid Nobilist account credentials and Google Sheets API access
-- Downloads are saved locally in the `downloads/` directory
-- Browser runs in headless mode in production environment
-- Google Sheets data is updated in matrix format (keywords as rows, dates as columns)
-- Slack notifications include detailed ranking analysis and statistics
-- The `rank_history/` directory stores local keyword history (optional, can be disabled)
+- **Platform**: Specifically designed for Nobilist platform (nobilista.com)
+- **Target Site**: Currently configured for "coeteco.jp" reports (customizable)
+- **Authentication**: Requires valid Nobilist credentials and Google Sheets service account
+- **File Storage**: Downloads saved in `downloads/` directory with date-stamped filenames
+- **Browser Mode**: Runs headless in production, visible in development
+- **Data Format**: Google Sheets uses matrix format (keywords as rows, dates as columns)
+- **URL Tracking**: Multi-URL support with line-break separation in spreadsheet
+- **Notifications**: Rich Slack reports with ranking analysis, trends, and statistics
+- **Project Structure**: Clean organization with all source code in `src/` directory
 
 ## 📞 Support
 
