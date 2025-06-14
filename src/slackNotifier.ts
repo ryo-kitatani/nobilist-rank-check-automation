@@ -13,8 +13,8 @@ export default class SlackNotifier {
     channel = "#coeteco-dm-product",
     threadTs = "1740819204.046099",
     broadcastToChannel = true,
-    username = "Nobilist順位チェッカー自動通知",
-    iconEmoji = ":nobilist:"
+    username = "Nobilista順位通知",
+    iconEmoji = ":nobilista:"
   }: Omit<SlackNotifyOptions, 'webhookUrl'>): Promise<boolean> {
     if (!this.webhookUrl) {
       console.log('Slack Webhook URLが設定されていないため、通知をスキップします');
