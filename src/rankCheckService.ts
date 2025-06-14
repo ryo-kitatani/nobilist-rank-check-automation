@@ -97,6 +97,9 @@ export default class RankCheckService {
       // マトリックス形式でデータを更新
       await this.sheetsManager.updateRankDataMatrix(rankData);
       
+      // 割合傾向タブに割合データを書き込み
+      await this.sheetsManager.writePercentageToGoogleSheets(rankData);
+      
       console.log('✅ Google Spreadsheetへの転記完了！');
     } catch (error) {
       console.log('⚠️  Google Spreadsheet転記エラー:', (error as Error).message);

@@ -175,5 +175,125 @@ export default class GoogleSheetsManager {
     }
   }
 
+  async writePercentageToGoogleSheets(data: RankData[], sheetName: string = '割合傾向'): Promise<void> {
+    if (!this.sheets) {
+      throw new Error('Google Sheets APIが初期化されていません');
+    }
+
+    try {
+      // 分析結果を取得
+      const analysis = this.analyzeRankData(data);
+      const today = data[0]?.date || new Date().toISOString().split('T')[0];
+      
+      // 現在のシートデータを取得
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: `${sheetName}!A:Z`
+      });
+
+      let values = response.data.values || [];
+      
+      // ヘッダー行がない場合は作成
+      if (values.length === 0 || values[0][0] !== '割合') {
+        values = [
+          ['割合', today],
+          ['1~3位', analysis.rankPercent['1-3'].toFixed(2)],
+          ['4~10位', analysis.rankPercent['4-10'].toFixed(2)],
+          ['11~50位', analysis.rankPercent['11-50'].toFixed(2)],
+          ['それ以下', analysis.rankPercent.others.toFixed(2)]
+        ];
+      } else {
+        // 既存のデータがある場合、B列（インデックス1）に今日の日付を設定
+        // ヘッダー行のB列に日付を設定
+        if (!values[0][1]) {
+          values[0][1] = today;
+        } else if (values[0][1] !== today) {
+          // 既存の日付と異なる場合は、新しい列を挿入
+          for (let i = 0; i < values.length; i++) {
+            if (values[i]) {
+              values[i].splice(1, 0, i === 0 ? today : '');
+            }
+          }
+        }
+        
+        // 既存の行を確認し、必要に応じて作成・更新
+        const expectedRows = ['1~3位', '4~10位', '11~50位', 'それ以下'];
+        const percentValues = [
+          analysis.rankPercent['1-3'].toFixed(2),
+          analysis.rankPercent['4-10'].toFixed(2),
+          analysis.rankPercent['11-50'].toFixed(2),
+          analysis.rankPercent.others.toFixed(2)
+        ];
+        
+        for (let i = 0; i < expectedRows.length; i++) {
+          if (!values[i + 1]) {
+            values[i + 1] = [expectedRows[i], percentValues[i]];
+          } else {
+            // A列にラベルを確認・設定
+            if (values[i + 1][0] !== expectedRows[i]) {
+              values[i + 1][0] = expectedRows[i];
+            }
+            // B列に値を設定
+            values[i + 1][1] = percentValues[i];
+          }
+        }
+      }
+      
+      // スプレッドシートを更新
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: `${sheetName}!A1`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: values
+        }
+      });
+      
+      console.log(`✅ 割合データを「${sheetName}」シートに書き込みました`);
+    } catch (error) {
+      console.error('❌ 割合データの書き込みエラー:', error);
+      throw error;
+    }
+  }
+
+  private analyzeRankData(data: RankData[]): { rankPercent: { '1-3': number; '4-10': number; '11-50': number; others: number }; total: number } {
+    const total = data.length;
+    
+    // 順位分布の計算
+    const rankCounts = {
+      '1-3': 0,
+      '4-10': 0,
+      '11-50': 0,
+      others: 0
+    };
+
+    for (const item of data) {
+      // 順位分布
+      if (item.rank >= 1 && item.rank <= 3) {
+        rankCounts['1-3']++;
+      } else if (item.rank >= 4 && item.rank <= 10) {
+        rankCounts['4-10']++;
+      } else if (item.rank >= 11 && item.rank <= 50) {
+        rankCounts['11-50']++;
+      } else {
+        // 0以下、51以上、NaNなど全て「それ以下」に分類
+        rankCounts.others++;
+      }
+    }
+
+    // パーセンテージ計算
+    const rankPercent = {
+      '1-3': (rankCounts['1-3'] / total) * 100,
+      '4-10': (rankCounts['4-10'] / total) * 100,
+      '11-50': (rankCounts['11-50'] / total) * 100,
+      others: (rankCounts.others / total) * 100
+    };
+
+    return {
+      rankPercent,
+      total
+    };
+  }
+
   // 削除: マトリックス形式を使用するため不要
 }

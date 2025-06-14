@@ -31,9 +31,7 @@ class NobilistClient {
       await this.page.goto("https://nobilista.com/login");
       await this.page.fill('input[name="email"]', credentials.email);
       await this.page.fill('input[name="password"]', credentials.password);
-      // <button class="themeMain" name="loginBtn" type="button">ログイン</button>
       await this.page.click('button[name="loginBtn"]');
-      console.log('ログイン成功');
       return true;
 
     } catch (error) {
@@ -79,8 +77,6 @@ class NobilistClient {
 
       // ファイル保存
       await download.saveAs(filePath);
-
-      console.log(`CSV保存完了: ${fileName}`);
       return filePath;
 
     } catch (error) {
