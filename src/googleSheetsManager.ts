@@ -85,11 +85,26 @@ export default class GoogleSheetsManager {
       
       // 各日付のデータを処理
       for (const [date, keywordData] of dataByDate) {
-        // 日付列を探すか新規作成
+        // 日付列を探すか新規作成（C列から開始）
         let dateColumnIndex = headerRow.indexOf(date);
         if (dateColumnIndex === -1) {
-          headerRow.push(date);
-          dateColumnIndex = headerRow.length - 1;
+          // C列（インデックス2）に新しい日付を挿入
+          if (headerRow.length <= 2) {
+            // ヘッダーがキーワードとURLのみの場合は追加
+            headerRow.push(date);
+            dateColumnIndex = 2;
+          } else {
+            // 既存の日付がある場合は、C列に挿入
+            headerRow.splice(2, 0, date);
+            dateColumnIndex = 2;
+
+            // 既存のすべての行にも空のセルを挿入
+            for (let i = 1; i < values.length; i++) {
+              if (values[i]) {
+                values[i].splice(2, 0, '');
+              }
+            }
+          }
         }
         
         // 各キーワードのデータを配置
