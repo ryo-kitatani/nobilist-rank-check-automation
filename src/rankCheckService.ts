@@ -24,12 +24,17 @@ export default class RankCheckService {
   async execute(): Promise<void> {
     try {
       await this.initialize();
+      // const csvPath = 'downloads/nobilist_ranks_2025-06-14.csv';
       const csvPath = await this.downloadCSV();
-      
+
       if (csvPath) {
         const rankData = await this.parseLocalData(csvPath);
+        // 2日前にしたい
+        // const two_before_today = new Date();
+        // two_before_today.setDate(two_before_today.getDate() - 2);
+        // const today = two_before_today.toISOString().split('T')[0];
         const today = new Date().toISOString().split('T')[0];
-        
+
         // 今日の日付のデータのみをフィルタリング
         const todayData = rankData.filter(item => item.date === today);
         console.log(`📊 処理対象: ${today}のデータ ${todayData.length}件 / 全データ ${rankData.length}件`);

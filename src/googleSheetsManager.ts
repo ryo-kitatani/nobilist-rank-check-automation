@@ -61,7 +61,7 @@ export default class GoogleSheetsManager {
       // 現在のスプレッドシートデータを取得
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: 'Nobilist!A:ZZ'
+        range: 'Nobilista(日次)!A:ZZ'
       });
 
       let values = response.data.values || [];
@@ -146,7 +146,7 @@ export default class GoogleSheetsManager {
       // スプレッドシート全体を更新
       await this.sheets.spreadsheets.values.update({
         spreadsheetId: this.spreadsheetId,
-        range: 'Nobilist!A1',
+        range: 'Nobilista(日次)!A1',
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: values
@@ -169,14 +169,14 @@ export default class GoogleSheetsManager {
       // Nobilistシートが存在するか確認
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: 'Nobilist!A1'
+        range: 'Nobilista(日次)!A1'
       });
 
       // A1にヘッダーがなければ追加
       if (!response.data.values || response.data.values.length === 0 || response.data.values[0][0] !== 'キーワード') {
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: this.spreadsheetId,
-          range: 'Nobilist!A1',
+          range: 'Nobilista(日次)!A1',
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: [['キーワード']]
