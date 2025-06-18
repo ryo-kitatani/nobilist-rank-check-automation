@@ -30,7 +30,9 @@ export default class RankDataManager {
           estimatedAccess: parseInt(record['想定アクセス']) || 0,
           searchFeatures: record['検索結果の特徴'] || '',
           competitiveness: parseInt(record['競合性']) || 0,
-          group: record['グループ'] || '',
+          group: record['グループ'] 
+            ? record['グループ'].split(',').map((g: string) => g.trim())
+            : [],
           priorityUrl: record['優先URL'] || '',
           title: record['タイトル'] || '',
           rankingUrl: record['ランクインしているURL'] || '',

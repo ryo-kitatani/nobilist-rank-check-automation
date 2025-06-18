@@ -9,7 +9,7 @@ export interface RankData {
   estimatedAccess: number;
   searchFeatures: string;
   competitiveness: number;
-  group: string;
+  group: string[];
   priorityUrl: string;
   title: string;
   rankingUrl: string;

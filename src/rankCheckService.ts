@@ -35,8 +35,8 @@ export default class RankCheckService {
         // const today = two_before_today.toISOString().split('T')[0];
         const today = new Date().toISOString().split('T')[0];
 
-        // 今日の日付のデータのみをフィルタリング
-        const todayData = rankData.filter(item => item.date === today);
+        // 今日の日付のデータのみをフィルタリング && groupがデジタルメディア_SAランクを取得
+        const todayData = rankData.filter(item => item.date === today && item.group.includes('デジタルメディア_SAランク'));
         console.log(`📊 処理対象: ${today}のデータ ${todayData.length}件 / 全データ ${rankData.length}件`);
         
         await this.syncToGoogleSheets(todayData);
