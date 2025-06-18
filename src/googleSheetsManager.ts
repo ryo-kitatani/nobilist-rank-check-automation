@@ -6,10 +6,15 @@ import { RankData } from './types';
 export default class GoogleSheetsManager {
   private sheets: any;
   private auth: any = null;
-  private readonly spreadsheetId: string;
+  private spreadsheetId: string;
+  private rateLimitDelay: number = 1000; // 1秒の遅延
 
-  constructor(spreadsheetId: string) {
-    this.spreadsheetId = spreadsheetId;
+  constructor(spreadsheetId?: string) {
+    this.spreadsheetId = spreadsheetId || '';
+  }
+
+  private async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   async init(credentialsPath: string): Promise<void> {
@@ -52,16 +57,99 @@ export default class GoogleSheetsManager {
     }
   }
 
-  async updateRankDataMatrix(data: RankData[]): Promise<void> {
+  async createSpreadsheet(title: string): Promise<string> {
+    if (!this.sheets) {
+      throw new Error('Google Sheets APIが初期化されていません');
+    }
+
+    try {
+      const response = await this.sheets.spreadsheets.create({
+        requestBody: {
+          properties: {
+            title: title
+          },
+          sheets: [{
+            properties: {
+              title: '概要',
+              index: 0
+            }
+          }]
+        }
+      });
+
+      const spreadsheetId = response.data.spreadsheetId;
+      console.log(`✅ 新しいスプレッドシートを作成しました: ${title} (ID: ${spreadsheetId})`);
+      return spreadsheetId;
+    } catch (error) {
+      console.error('❌ スプレッドシート作成エラー:', error);
+      throw error;
+    }
+  }
+
+  async createOrGetSheet(sheetName: string): Promise<void> {
+    if (!this.sheets || !this.spreadsheetId) {
+      throw new Error('Google Sheets APIが初期化されていません');
+    }
+
+    try {
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
+      
+      // スプレッドシートの情報を取得
+      const spreadsheet = await this.sheets.spreadsheets.get({
+        spreadsheetId: this.spreadsheetId
+      });
+
+      // シートが存在するか確認
+      const sheetExists = spreadsheet.data.sheets.some(
+        (sheet: any) => sheet.properties.title === sheetName
+      );
+
+      if (!sheetExists) {
+        // レート制限対策の遅延
+        await this.delay(this.rateLimitDelay);
+        
+        // シートを作成
+        await this.sheets.spreadsheets.batchUpdate({
+          spreadsheetId: this.spreadsheetId,
+          requestBody: {
+            requests: [{
+              addSheet: {
+                properties: {
+                  title: sheetName
+                }
+              }
+            }]
+          }
+        });
+        console.log(`✅ 新しいシートを作成しました: ${sheetName}`);
+      }
+    } catch (error) {
+      console.error('❌ シート作成エラー:', error);
+      throw error;
+    }
+  }
+
+  setSpreadsheetId(spreadsheetId: string): void {
+    this.spreadsheetId = spreadsheetId;
+  }
+
+  async updateRankDataMatrix(data: RankData[], sheetName: string = 'Nobilista(日次)'): Promise<void> {
     if (!this.sheets) {
       throw new Error('Google Sheets APIが初期化されていません');
     }
 
     try {
       // 現在のスプレッドシートデータを取得
+      // シートが存在することを確認
+      await this.createOrGetSheet(sheetName);
+
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
+      
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: 'Nobilista(日次)!A:ZZ'
+        range: `${sheetName}!A:ZZ`
       });
 
       let values = response.data.values || [];
@@ -143,10 +231,13 @@ export default class GoogleSheetsManager {
         }
       }
       
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
+      
       // スプレッドシート全体を更新
       await this.sheets.spreadsheets.values.update({
         spreadsheetId: this.spreadsheetId,
-        range: 'Nobilista(日次)!A1',
+        range: `${sheetName}!A1`,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: values
@@ -160,26 +251,35 @@ export default class GoogleSheetsManager {
     }
   }
 
-  async initializeMatrixSheet(): Promise<void> {
+  async initializeMatrixSheet(sheetName: string = 'Nobilista(日次)'): Promise<void> {
     if (!this.sheets) {
       throw new Error('Google Sheets APIが初期化されていません');
     }
 
     try {
       // Nobilistシートが存在するか確認
+      // シートが存在することを確認
+      await this.createOrGetSheet(sheetName);
+
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
+      
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: 'Nobilista(日次)!A1'
+        range: `${sheetName}!A1`
       });
 
       // A1にヘッダーがなければ追加
       if (!response.data.values || response.data.values.length === 0 || response.data.values[0][0] !== 'キーワード') {
+        // レート制限対策の遅延
+        await this.delay(this.rateLimitDelay);
+        
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: this.spreadsheetId,
-          range: 'Nobilista(日次)!A1',
+          range: `${sheetName}!A1`,
           valueInputOption: 'USER_ENTERED',
           requestBody: {
-            values: [['キーワード']]
+            values: [['キーワード', 'URL']]
           }
         });
         console.log('✅ マトリックス形式のヘッダーを初期化しました');
@@ -190,7 +290,7 @@ export default class GoogleSheetsManager {
     }
   }
 
-  async writePercentageToGoogleSheets(data: RankData[], sheetName: string = '割合傾向'): Promise<void> {
+  async writePercentageToGoogleSheets(data: RankData[], sheetName: string): Promise<void> {
     if (!this.sheets) {
       throw new Error('Google Sheets APIが初期化されていません');
     }
@@ -199,6 +299,12 @@ export default class GoogleSheetsManager {
       // 分析結果を取得
       const analysis = this.analyzeRankData(data);
       const today = data[0]?.date || new Date().toISOString().split('T')[0];
+      
+      // シートが存在することを確認
+      await this.createOrGetSheet(sheetName);
+
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
       
       // 現在のシートデータを取得
       const response = await this.sheets.spreadsheets.values.get({
@@ -253,6 +359,9 @@ export default class GoogleSheetsManager {
           }
         }
       }
+      
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
       
       // スプレッドシートを更新
       await this.sheets.spreadsheets.values.update({

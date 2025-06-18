@@ -35,12 +35,14 @@ export default class RankCheckService {
         // const today = two_before_today.toISOString().split('T')[0];
         const today = new Date().toISOString().split('T')[0];
 
-        // 今日の日付のデータのみをフィルタリング && groupがデジタルメディア_SAランクを取得
-        const todayData = rankData.filter(item => item.date === today && item.group.includes('デジタルメディア_SAランク'));
+        // 今日の日付のデータのみをフィルタリング
+        const todayData = rankData.filter(item => item.date === today);
         console.log(`📊 処理対象: ${today}のデータ ${todayData.length}件 / 全データ ${rankData.length}件`);
         
         await this.syncToGoogleSheets(todayData);
-        await this.sendSlackNotification(todayData);
+        // groupがデジタルメディア_SAランクのみSlack通知する
+        // const filteredData = todayData.filter(item => item.group.includes('デジタルメディア_SAランク'));
+        // await this.sendSlackNotification(filteredData);
       }
     } catch (error) {
       console.error('❌ エラー発生:', (error as Error).message);
@@ -95,17 +97,45 @@ export default class RankCheckService {
 
     try {
       await this.sheetsManager.init(this.config.googleCredentialsPath);
+
+      // グループごとにデータを分類
+      const dataByGroup = new Map<string, RankData[]>();
+      for (const item of rankData) {
+        // groupは既に配列としてパース済み
+        for (const group of item.group) {
+          if (!dataByGroup.has(group)) {
+            dataByGroup.set(group, []);
+          }
+          dataByGroup.get(group)!.push(item);
+        }
+      }
+
+      // 各グループごとにタブを作成してデータを書き込み
+      let processedGroups = 0;
+      const totalGroups = dataByGroup.size;
+
+      for (const [group, groupData] of dataByGroup) {
+        const sheetName = group || '未分類';
+        processedGroups++;
+        console.log(`\n📊 グループ「${sheetName}」のデータを処理中... (${groupData.length}件) [${processedGroups}/${totalGroups}]`);
+
+        try {
+          // データシートに書き込み
+          await this.sheetsManager.initializeMatrixSheet(sheetName);
+          await this.sheetsManager.updateRankDataMatrix(groupData, sheetName);
+
+          // 割合傾向シートに書き込み
+          const percentageSheetName = `${sheetName}_割合傾向`;
+          await this.sheetsManager.writePercentageToGoogleSheets(groupData, percentageSheetName);
+
+          console.log(`✅ グループ「${sheetName}」の処理完了`);
+        } catch (error) {
+          console.error(`❌ グループ「${sheetName}」の処理エラー:`, error);
+          // エラーが発生しても他のグループの処理を続行
+        }
+      }
       
-      // マトリックス形式でシートを初期化
-      await this.sheetsManager.initializeMatrixSheet();
-      
-      // マトリックス形式でデータを更新
-      await this.sheetsManager.updateRankDataMatrix(rankData);
-      
-      // 割合傾向タブに割合データを書き込み
-      await this.sheetsManager.writePercentageToGoogleSheets(rankData);
-      
-      console.log('✅ Google Spreadsheetへの転記完了！');
+      console.log('\n✅ 全グループのGoogle Spreadsheetへの転記完了！');
     } catch (error) {
       console.log('⚠️  Google Spreadsheet転記エラー:', (error as Error).message);
       console.log('ローカルファイルへの保存は完了しています。');
