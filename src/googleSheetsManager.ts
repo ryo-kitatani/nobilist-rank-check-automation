@@ -419,5 +419,243 @@ export default class GoogleSheetsManager {
     };
   }
 
+  private getRankCounts(data: RankData[]): { '1-3': number; '4-10': number; '11-50': number; others: number } {
+    const rankCounts = {
+      '1-3': 0,
+      '4-10': 0,
+      '11-50': 0,
+      others: 0
+    };
+
+    for (const item of data) {
+      if (item.rank >= 1 && item.rank <= 3) {
+        rankCounts['1-3']++;
+      } else if (item.rank >= 4 && item.rank <= 10) {
+        rankCounts['4-10']++;
+      } else if (item.rank >= 11 && item.rank <= 50) {
+        rankCounts['11-50']++;
+      } else {
+        rankCounts.others++;
+      }
+    }
+
+    return rankCounts;
+  }
+
   // 削除: マトリックス形式を使用するため不要
+
+  /**
+   * 統合シートにデータを書き込む（割合データとキーワード順位データを1つのシートに）
+   */
+  async writeIntegratedData(data: RankData[], sheetName: string): Promise<void> {
+    if (!this.sheets) {
+      throw new Error('Google Sheets APIが初期化されていません');
+    }
+
+    try {
+      // シートが存在することを確認
+      await this.createOrGetSheet(sheetName);
+
+      // 分析結果を取得
+      const analysis = this.analyzeRankData(data);
+      const today = data[0]?.date || new Date().toISOString().split('T')[0];
+
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
+      
+      // 現在のシートデータを取得
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: `${sheetName}!A:ZZ`
+      });
+
+      let values = response.data.values || [];
+      
+      // シートが空の場合、新しく作成
+      if (values.length === 0) {
+        // 割合セクション（件数も含む）
+        const rankCounts = this.getRankCounts(data);
+        values = [
+          ['割合', '', today],  // B列を空けてC列から日付開始
+          ['1~3位', '', `${analysis.rankPercent['1-3'].toFixed(2)} (${rankCounts['1-3']}件)`],
+          ['4~10位', '', `${analysis.rankPercent['4-10'].toFixed(2)} (${rankCounts['4-10']}件)`],
+          ['11~50位', '', `${analysis.rankPercent['11-50'].toFixed(2)} (${rankCounts['11-50']}件)`],
+          ['それ以下', '', `${analysis.rankPercent.others.toFixed(2)} (${rankCounts.others}件)`],
+          [], // 空行
+          ['キーワード', 'URL', today] // キーワードセクションのヘッダー
+        ];
+
+        // キーワードデータを追加
+        for (const item of data) {
+          values.push([
+            item.keyword,
+            item.rankingUrl || '',
+            item.rank.toString()
+          ]);
+        }
+      } else {
+        // 既存のシートがある場合
+        
+        // 割合セクションを探す
+        let percentageEndRow = -1;
+        for (let i = 0; i < values.length; i++) {
+          if (values[i] && values[i][0] === 'それ以下') {
+            percentageEndRow = i;
+            break;
+          }
+        }
+
+        // キーワードセクションのヘッダー行を探す
+        let keywordHeaderRow = -1;
+        for (let i = percentageEndRow + 1; i < values.length; i++) {
+          if (values[i] && values[i][0] === 'キーワード') {
+            keywordHeaderRow = i;
+            break;
+          }
+        }
+
+        // 日付列を統一的に管理（C列から開始）
+        let dateColumnIndex = -1;
+        
+        // キーワードヘッダー行から日付列を確認
+        if (keywordHeaderRow >= 0 && values[keywordHeaderRow]) {
+          const headerRow = values[keywordHeaderRow];
+          dateColumnIndex = headerRow.indexOf(today);
+          
+          // 新しい日付の場合は列を追加
+          if (dateColumnIndex === -1) {
+            // C列（インデックス2）に新しい日付を挿入
+            dateColumnIndex = 2;
+            
+            // すべての行に新しい列を挿入
+            for (let i = 0; i < values.length; i++) {
+              if (values[i] && values[i].length >= 2) {
+                // キーワードヘッダー行には日付を挿入
+                if (i === keywordHeaderRow) {
+                  values[i].splice(dateColumnIndex, 0, today);
+                } else if (i === 0 && values[i][0] === '割合') {
+                  // 割合ヘッダー行にも日付を挿入
+                  values[i].splice(dateColumnIndex, 0, today);
+                } else {
+                  // その他の行は空のセルを挿入
+                  values[i].splice(dateColumnIndex, 0, '');
+                }
+              }
+            }
+          }
+        } else if (values[0] && values[0][0] === '割合') {
+          // キーワードセクションがまだない場合、割合セクションから確認
+          dateColumnIndex = values[0].indexOf(today);
+          if (dateColumnIndex === -1) {
+            dateColumnIndex = 2;
+            // 割合セクションの行に新しい列を挿入
+            for (let i = 0; i <= percentageEndRow; i++) {
+              if (values[i] && values[i].length >= 2) {
+                values[i].splice(dateColumnIndex, 0, i === 0 ? today : '');
+              }
+            }
+          }
+        }
+
+        // 割合データの更新
+        if (percentageEndRow >= 0 && dateColumnIndex >= 0) {
+          const rankCounts = this.getRankCounts(data);
+          const percentValues = [
+            `${analysis.rankPercent['1-3'].toFixed(2)} (${rankCounts['1-3']}件)`,
+            `${analysis.rankPercent['4-10'].toFixed(2)} (${rankCounts['4-10']}件)`,
+            `${analysis.rankPercent['11-50'].toFixed(2)} (${rankCounts['11-50']}件)`,
+            `${analysis.rankPercent.others.toFixed(2)} (${rankCounts.others}件)`
+          ];
+
+          for (let i = 0; i < percentValues.length; i++) {
+            const rowIndex = i + 1; // 割合ヘッダーの次の行から
+            if (values[rowIndex]) {
+              // 配列を必要なサイズまで拡張
+              while (values[rowIndex].length <= dateColumnIndex) {
+                values[rowIndex].push('');
+              }
+              values[rowIndex][dateColumnIndex] = percentValues[i];
+            }
+          }
+        }
+
+        // キーワードデータの更新
+        if (keywordHeaderRow >= 0 && dateColumnIndex >= 0) {
+          // キーワードデータを配置
+          const keywordStartRow = keywordHeaderRow + 1;
+          const existingKeywords = new Map<string, number>();
+          
+          // 既存のキーワードをマップに登録
+          for (let i = keywordStartRow; i < values.length; i++) {
+            if (values[i] && values[i][0]) {
+              existingKeywords.set(values[i][0], i);
+            }
+          }
+
+          // データを更新または追加
+          for (const item of data) {
+            const existingRowIndex = existingKeywords.get(item.keyword);
+            
+            if (existingRowIndex !== undefined) {
+              // 既存の行を更新
+              while (values[existingRowIndex].length <= dateColumnIndex) {
+                values[existingRowIndex].push('');
+              }
+              values[existingRowIndex][dateColumnIndex] = item.rank.toString();
+              
+              // URLを更新
+              if (item.rankingUrl) {
+                values[existingRowIndex][1] = item.rankingUrl;
+              }
+            } else {
+              // 新しい行を追加
+              const newRow: string[] = [item.keyword, item.rankingUrl || ''];
+              while (newRow.length < dateColumnIndex) {
+                newRow.push('');
+              }
+              newRow[dateColumnIndex] = item.rank.toString();
+              values.push(newRow);
+            }
+          }
+        } else if (keywordHeaderRow === -1 && data.length > 0) {
+          // キーワードセクションがまだない場合は追加
+          values.push([]); // 空行
+          const headerRow = ['キーワード', 'URL'];
+          while (headerRow.length < dateColumnIndex) {
+            headerRow.push('');
+          }
+          headerRow[dateColumnIndex] = today;
+          values.push(headerRow);
+          
+          // キーワードデータを追加
+          for (const item of data) {
+            const newRow: string[] = [item.keyword, item.rankingUrl || ''];
+            while (newRow.length < dateColumnIndex) {
+              newRow.push('');
+            }
+            newRow[dateColumnIndex] = item.rank.toString();
+            values.push(newRow);
+          }
+        }
+      }
+      
+      // レート制限対策の遅延
+      await this.delay(this.rateLimitDelay);
+      
+      // スプレッドシート全体を更新
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: `${sheetName}!A1`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: values
+        }
+      });
+      
+      console.log(`✅ 統合データを「${sheetName}」シートに書き込みました`);
+    } catch (error) {
+      console.error('❌ 統合データの書き込みエラー:', error);
+      throw error;
+    }
+  }
 }

@@ -24,14 +24,14 @@ export default class RankCheckService {
   async execute(): Promise<void> {
     try {
       await this.initialize();
-      // const csvPath = 'downloads/nobilist_ranks_2025-06-14.csv';
+      // const csvPath = 'downloads/nobilist_ranks_2025-06-20.csv';
       const csvPath = await this.downloadCSV();
 
       if (csvPath) {
         const rankData = await this.parseLocalData(csvPath);
         // 2日前にしたい
         // const two_before_today = new Date();
-        // two_before_today.setDate(two_before_today.getDate() - 2);
+        // two_before_today.setDate(two_before_today.getDate() - 1);
         // const today = two_before_today.toISOString().split('T')[0];
         const today = new Date().toISOString().split('T')[0];
 
@@ -41,8 +41,8 @@ export default class RankCheckService {
         
         await this.syncToGoogleSheets(todayData);
         // groupがデジタルメディア_SAランクのみSlack通知する
-        // const filteredData = todayData.filter(item => item.group.includes('デジタルメディア_SAランク'));
-        // await this.sendSlackNotification(filteredData);
+        const filteredData = todayData.filter(item => item.group.includes('デジタルメディア_SAランク'));
+        await this.sendSlackNotification(filteredData);
       }
     } catch (error) {
       console.error('❌ エラー発生:', (error as Error).message);
@@ -120,13 +120,9 @@ export default class RankCheckService {
         console.log(`\n📊 グループ「${sheetName}」のデータを処理中... (${groupData.length}件) [${processedGroups}/${totalGroups}]`);
 
         try {
-          // データシートに書き込み
-          await this.sheetsManager.initializeMatrixSheet(sheetName);
-          await this.sheetsManager.updateRankDataMatrix(groupData, sheetName);
-
-          // 割合傾向シートに書き込み
-          const percentageSheetName = `${sheetName}_割合傾向`;
-          await this.sheetsManager.writePercentageToGoogleSheets(groupData, percentageSheetName);
+          // 統合シートに書き込み（割合とキーワードデータを1つのシートに）
+          const integratedSheetName = `${sheetName}`;
+          await this.sheetsManager.writeIntegratedData(groupData, integratedSheetName);
 
           console.log(`✅ グループ「${sheetName}」の処理完了`);
         } catch (error) {

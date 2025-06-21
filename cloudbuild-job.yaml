@@ -4,9 +4,9 @@ steps:
     args:
       - 'build'
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${SHORT_SHA}'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_JOB_NAME}:${SHORT_SHA}'
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:latest'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_JOB_NAME}:latest'
       - '.'
 
   # イメージをArtifact Registryにプッシュ
@@ -14,28 +14,28 @@ steps:
     args:
       - 'push'
       - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_JOB_NAME}'
 
-  # Cloud Runへデプロイ
+  # Cloud Run Jobへデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
+      - 'jobs'
       - 'deploy'
-      - '${_SERVICE_NAME}'
+      - '${_JOB_NAME}'
       - '--image'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:${SHORT_SHA}'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_JOB_NAME}:${SHORT_SHA}'
       - '--region'
       - '${_REGION}'
-      - '--platform'
-      - 'managed'
       - '--memory'
       - '2Gi'
-      - '--timeout'
+      - '--task-timeout'
       - '600'
-      - '--max-instances'
+      - '--max-retries'
       - '1'
-      - '--no-allow-unauthenticated'
+      - '--parallelism'
+      - '1'
       - '--set-env-vars'
       - 'NODE_ENV=production'
       - '--set-secrets'
@@ -45,7 +45,7 @@ steps:
 
 # 環境変数の設定
 substitutions:
-  _SERVICE_NAME: nobilist-rank-checker
+  _JOB_NAME: nobilist-rank-check-job
   _REGION: asia-northeast1
   _REPOSITORY: nobilist-repo
 

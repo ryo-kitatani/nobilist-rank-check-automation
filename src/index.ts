@@ -17,8 +17,23 @@ async function runRankCheck() {
   await service.execute();
 }
 
-// Cloud Run用のHTTPサーバー
-if (process.env.NODE_ENV === 'production') {
+// Cloud Run Job用の実行モード判定
+const isCloudRunJob = process.env.K_SERVICE && process.env.K_REVISION;
+
+if (isCloudRunJob) {
+  // Cloud Run Job として実行
+  console.log('🔷 Cloud Run Job モードで実行します');
+  runRankCheck()
+    .then(() => {
+      console.log('✅ Cloud Run Job 正常終了');
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error('❌ Cloud Run Job エラー:', error);
+      process.exit(1);
+    });
+} else if (process.env.NODE_ENV === 'production') {
+  // Cloud Run Service として実行（HTTPサーバー）
   const port = process.env.PORT || 8080;
   
   const server = http.createServer(async (req, res) => {
