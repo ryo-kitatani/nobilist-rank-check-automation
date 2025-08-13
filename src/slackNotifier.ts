@@ -132,13 +132,13 @@ export default class SlackNotifier {
     let message = "";
     message += `Nobilist順位チェッカー順位計測結果（${date})\n\n`;
 
-    message += `■ 順位分布 [<https://docs.google.com/spreadsheets/d/1fEG6ZVb6ydpFrAQ501JcM0v5edl_dNVZubx2GQuNFNE/edit?gid=1270629548#gid=1270629548|確認>]\n`;
+    message += `■ 順位分布 [<https://docs.google.com/spreadsheets/d/${process.env.SPREADSHEET_ID}/edit?gid=1270629548#gid=1270629548|確認>]\n`;
     message += `1~3位  ：${rankPercent['1-3'].toFixed(2)}% (${rankCounts['1-3']}件)\n`;
     message += `4~10位 ：${rankPercent['4-10'].toFixed(2)}% (${rankCounts['4-10']}件)\n`;
     message += `11~50位：${rankPercent['11-50'].toFixed(2)}% (${rankCounts['11-50']}件)\n`;
     message += `それ以下：${rankPercent.others.toFixed(2)}%(${rankCounts.others}件)\n\n`;
 
-    message += `■ 順位変化 [<https://docs.google.com/spreadsheets/d/1fEG6ZVb6ydpFrAQ501JcM0v5edl_dNVZubx2GQuNFNE/edit?gid=1270629548#gid=1270629548|確認]>\n`;
+    message += "■ 順位変化 \n";
     message += `上昇：${changeStats.improved}件 (${((changeStats.improved / total) * 100).toFixed(2)}%)\n`;
     message += `下降：${changeStats.worsened}件 (${((changeStats.worsened / total) * 100).toFixed(2)}%)\n`;
     message += `変化なし：${changeStats.unchanged}件 (${((changeStats.unchanged / total) * 100).toFixed(2)}%)\n\n`;
