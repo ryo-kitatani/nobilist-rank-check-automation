@@ -18,8 +18,8 @@ export interface RankData {
 }
 
 export interface RankCheckConfig {
-  nobilistEmail: string;
-  nobilistPassword: string;
+  nobilistaEmail: string;
+  nobilistaPassword: string;
   spreadsheetId: string;
   googleCredentialsPath?: string;
   slackWebhookUrl?: string;

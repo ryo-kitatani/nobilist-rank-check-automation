@@ -257,7 +257,7 @@ export default class GoogleSheetsManager {
     }
 
     try {
-      // Nobilistシートが存在するか確認
+      // Nobilistaシートが存在するか確認
       // シートが存在することを確認
       await this.createOrGetSheet(sheetName);
 

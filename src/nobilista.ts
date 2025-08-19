@@ -4,7 +4,7 @@ import * as fs from "fs";
 import RankDataManager from "./rankDataManager";
 import { LoginCredentials } from "./types";
 
-class NobilistClient {
+class NobilistaClient {
   private browser: Browser | null = null;
   private page: Page | null = null;
 
@@ -27,7 +27,7 @@ class NobilistClient {
       throw new Error("Browser page is not initialized.");
     }
     try {
-      console.log('Nobilistにログイン中...♻️');
+      console.log('Nobilistaにログイン中...♻️');
       await this.page.goto("https://nobilista.com/login");
       await this.page.fill('input[name="email"]', credentials.email);
       await this.page.fill('input[name="password"]', credentials.password);
@@ -66,7 +66,7 @@ class NobilistClient {
 
       // ファイル名生成（日付付き）
       const today = new Date().toISOString().split('T')[0];
-      const fileName = `nobilist_ranks_${today}.csv`;
+      const fileName = `nobilista_ranks_${today}.csv`;
       const filePath = path.join('./downloads', fileName);
 
       // ディレクトリが存在しない場合は作成
@@ -92,4 +92,4 @@ class NobilistClient {
   }
 }
 
-export default NobilistClient;
+export default NobilistaClient;

@@ -1,4 +1,4 @@
-import NobilistClient from './nobilist';
+import NobilistaClient from './nobilista';
 import RankDataManager from './rankDataManager';
 import GoogleSheetsManager from './googleSheetsManager';
 import SlackNotifier from './slackNotifier';
@@ -6,14 +6,14 @@ import { RankCheckConfig, RankData } from './types';
 
 export default class RankCheckService {
   private config: RankCheckConfig;
-  private client: NobilistClient;
+  private client: NobilistaClient;
   private dataManager: RankDataManager;
   private sheetsManager: GoogleSheetsManager;
   private slackNotifier?: SlackNotifier;
 
   constructor(config: RankCheckConfig) {
     this.config = config;
-    this.client = new NobilistClient();
+    this.client = new NobilistaClient();
     this.dataManager = new RankDataManager();
     this.sheetsManager = new GoogleSheetsManager(config.spreadsheetId);
     if (config.slackWebhookUrl) {
@@ -24,7 +24,7 @@ export default class RankCheckService {
   async execute(): Promise<void> {
     try {
       await this.initialize();
-      // const csvPath = 'downloads/nobilist_ranks_2025-06-20.csv';
+      // const csvPath = 'downloads/nobilista_ranks_2025-06-20.csv';
       const csvPath = await this.downloadCSV();
 
       if (csvPath) {
@@ -60,8 +60,8 @@ export default class RankCheckService {
   private async downloadCSV(): Promise<string | null> {
     console.log('📍 ログイン中...');
     const loginResult = await this.client.login({
-      email: this.config.nobilistEmail,
-      password: this.config.nobilistPassword
+      email: this.config.nobilistaEmail,
+      password: this.config.nobilistaPassword
     });
 
     if (!loginResult) {

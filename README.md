@@ -1,14 +1,14 @@
-# Nobilist Rank Check Automation
+# Nobilista Rank Check Automation
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 
-A comprehensive TypeScript automation tool for **Nobilist** (Japanese SEO ranking tool) that downloads ranking reports, processes CSV data, syncs to Google Sheets in matrix format, and sends intelligent Slack notifications with ranking analysis.
+A comprehensive TypeScript automation tool for **Nobilista** (Japanese SEO ranking tool) that downloads ranking reports, processes CSV data, syncs to Google Sheets in matrix format, and sends intelligent Slack notifications with ranking analysis.
 
 ## 🚀 Features
 
-- **🔐 Automated Login**: Uses Playwright to automatically log into Nobilist platform with stored credentials
+- **🔐 Automated Login**: Uses Playwright to automatically log into Nobilista platform with stored credentials
 - **📊 Intelligent CSV Processing**: Downloads and parses ranking reports with comprehensive data validation
 - **📈 Matrix Format Sync**: Updates Google Sheets in matrix format (keywords × dates) with automatic row/column management
 - **🔗 Multi-URL Tracking**: Tracks ranking URLs in spreadsheet with line-break separation for multiple URLs
@@ -28,10 +28,10 @@ A comprehensive TypeScript automation tool for **Nobilist** (Japanese SEO rankin
 ## 📁 Project Structure
 
 ```
-nobilist-rank-check-automation/
+nobilista-rank-check-automation/
 ├── src/
 │   ├── index.ts                    # Main entry point
-│   ├── nobilist.ts                 # Core Nobilist client class
+│   ├── nobilista.ts                 # Core Nobilista client class
 │   ├── rankCheckService.ts         # Main orchestration service
 │   ├── googleSheetsManager.ts      # Google Sheets integration
 │   ├── slackNotifier.ts           # Slack notifications
@@ -39,7 +39,7 @@ nobilist-rank-check-automation/
 │   └── types/
 │       └── index.ts               # TypeScript type definitions
 ├── downloads/                 # CSV reports storage
-│   └── nobilist_ranks_YYYY-MM-DD.csv
+│   └── nobilista_ranks_YYYY-MM-DD.csv
 ├── dist/                      # Compiled JavaScript files
 ├── package.json               # Dependencies and scripts
 ├── tsconfig.json              # TypeScript configuration
@@ -53,7 +53,7 @@ nobilist-rank-check-automation/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd nobilist-rank-check-automation
+   cd nobilista-rank-check-automation
    ```
 
 2. **Install dependencies**
@@ -69,8 +69,8 @@ nobilist-rank-check-automation/
 4. **Set up environment variables**
    Create a `.env` file in the root directory:
    ```env
-   NOBILIST_EMAIL=your-email@example.com
-   NOBILIST_PASSWORD=your-password
+   NOBILISTA_EMAIL=your-email@example.com
+   NOBILISTA_PASSWORD=your-password
    GOOGLE_SPREADSHEET_ID=your-google-spreadsheet-id
    SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
    NODE_ENV=development
@@ -107,7 +107,7 @@ npm run dev
 ### What it does:
 
 1. **Initialize Browser**: Launches Chromium browser with Playwright
-2. **Login**: Automatically logs into Nobilist using provided credentials
+2. **Login**: Automatically logs into Nobilista using provided credentials
 3. **Navigate**: Goes to the specific report page (currently configured for "coeteco.jp")
 4. **Download**: Clicks CSV download button and saves the file
 5. **Process Data**: Parses CSV data and processes ranking information
@@ -120,7 +120,7 @@ npm run dev
 
 ```
 📍 初期化中...
-Nobilistにログイン中...♻️
+Nobilistaにログイン中...♻️
 ログイン成功
 📍 データ解析中...
 ✅ 273件のデータを読み込みました
@@ -152,13 +152,13 @@ npm run build
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NOBILIST_EMAIL` | Nobilist account email | Yes |
-| `NOBILIST_PASSWORD` | Nobilist account password | Yes |
-| `GOOGLE_SPREADSHEET_ID` | Google Sheets spreadsheet ID | Yes |
-| `SLACK_WEBHOOK_URL` | Slack webhook URL for notifications | Optional |
-| `NODE_ENV` | Environment (development/production) | No |
+| Variable                | Description                          | Required |
+|-------------------------|--------------------------------------|----------|
+| `NOBILISTA_EMAIL`       | Nobilista account email              | Yes |
+| `NOBILISTA_PASSWORD`    | Nobilista account password           | Yes |
+| `GOOGLE_SPREADSHEET_ID` | Google Sheets spreadsheet ID         | Yes |
+| `SLACK_WEBHOOK_URL`     | Slack webhook URL for notifications  | Optional |
+| `NODE_ENV`              | Environment (development/production) | No |
 
 ## 📊 Slack Notification Features
 
@@ -192,9 +192,9 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 
 ## ⚠️ Important Notes
 
-- **Platform**: Specifically designed for Nobilist platform (nobilista.com)
+- **Platform**: Specifically designed for Nobilista platform (nobilista.com)
 - **Target Site**: Currently configured for "coeteco.jp" reports (customizable)
-- **Authentication**: Requires valid Nobilist credentials and Google Sheets service account
+- **Authentication**: Requires valid Nobilista credentials and Google Sheets service account
 - **File Storage**: Downloads saved in `downloads/` directory with date-stamped filenames
 - **Browser Mode**: Runs headless in production, visible in development
 - **Data Format**: Google Sheets uses matrix format (keywords as rows, dates as columns)
